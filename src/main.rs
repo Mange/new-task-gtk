@@ -169,9 +169,11 @@ fn main() {
 
     {
         let app2 = app.clone();
-        app.entry.connect_activate(move |entry: &Entry| {
-            app2.add_task(entry.get_text().unwrap_or_else(|| String::from("")));
-        });
+        app.entry.connect_activate(
+            move |entry: &Entry| if entry.get_editable() {
+                app2.add_task(entry.get_text().unwrap_or_else(|| String::from("")));
+            },
+        );
     }
 
     gtk::main();
