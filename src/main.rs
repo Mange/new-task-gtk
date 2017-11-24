@@ -1,12 +1,16 @@
 extern crate gtk;
+extern crate gdk;
 extern crate xdg;
 
 mod command;
 
 use std::rc::Rc;
+
 use gtk::prelude::*;
+
 use gtk::{Entry, Window, TextView, Builder, Revealer, CssProvider, StyleContext, TextBuffer};
 use xdg::BaseDirectories;
+
 use command::{TaskWarrior, CommandStream};
 
 struct App {
@@ -92,6 +96,14 @@ impl App {
         self.output_view.get_buffer().unwrap().set_text(&error);
     }
 
+    fn handle_key(&self, key: &gdk::EventKey) {
+        use gdk::enums::key;
+
+        if key.get_keyval() == key::Escape {
+            App::quit();
+        }
+    }
+
     fn quit() {
         gtk::main_quit();
     }
@@ -174,6 +186,14 @@ fn main() {
                 app2.add_task(entry.get_text().unwrap_or_else(|| String::from("")));
             },
         );
+    }
+
+    {
+        let app2 = app.clone();
+        app.window.connect_key_release_event(move |_, key| {
+            app2.handle_key(key);
+            Inhibit(false)
+        });
     }
 
     gtk::main();

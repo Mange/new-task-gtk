@@ -5,6 +5,7 @@ version = "0.1.0"
 
 [dependencies]
 xdg = "2.1.0"
+gdk = "0.6.0"
 
 [dependencies.gtk]
 features = ["v3_22"]
