@@ -37,6 +37,7 @@ impl App {
     fn add_task(&self, text: String) {
         self.revealer.set_reveal_child(true);
         self.entry.set_editable(false);
+        self.output_view.grab_focus();
 
         if text.len() > 0 {
             let stream = TaskWarrior::add(&text);
