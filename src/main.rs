@@ -72,12 +72,12 @@ impl App {
                         return Continue(false);
                     }
                     Failed(code) => {
-                        let message = format!("Program exited with {} exist exit code", code);
+                        let message = format!("\nProgram exited with {} exit code\n", code);
                         insert_into_buffer(&output_buffer, &message);
                         return Continue(false);
                     }
                     Error(message) => {
-                        let message = format!("ERROR: {}", message);
+                        let message = format!("\nERROR: {}\n", message);
                         insert_into_buffer(&output_buffer, &message);
                         return Continue(false);
                     }
