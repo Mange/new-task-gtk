@@ -2,55 +2,39 @@ extern crate gtk;
 
 use std::rc::Rc;
 use gtk::prelude::*;
-use gtk::{Entry, Window, WindowType, TextBuffer, TextView, Orientation};
-use gtk::Box as GtkBox;
+use gtk::{Entry, Window, WindowType, TextBuffer, TextView, Orientation, Builder, Revealer};
 
 struct App {
     window: Window,
-
     entry: Entry,
-
-    vertical_box: GtkBox,
-    command_output: TextBuffer,
-    command_output_view: TextView,
+    revealer: Revealer,
+    output_view: TextView,
 }
 
 impl App {
-    fn new(title: &str) -> App {
-        let window = Window::new(WindowType::Toplevel);
-        window.set_title(title);
-        window.set_default_size(350, 70);
+    fn build(glade: &str) -> App {
+        let builder = Builder::new_from_string(glade);
+        let window: Window = builder.get_object("window").unwrap();
+        let entry = builder.get_object("entry").unwrap();
+        let revealer = builder.get_object("revealer").unwrap();
+        let output_view = builder.get_object("output_view").unwrap();
 
-        let vertical_box = GtkBox::new(Orientation::Vertical, 5);
-        let entry = Entry::new();
-        let command_output = TextBuffer::new(None);
-        let command_output_view = TextView::new_with_buffer(&command_output);
-
-        vertical_box.pack_start(&entry, false, false, 0);
-
-        window.add(&vertical_box);
-        window.show_all();
+        window.set_default_size(800, -1);
 
         App {
             window: window,
             entry: entry,
-            vertical_box: vertical_box,
-            command_output: command_output,
-            command_output_view: command_output_view,
+            revealer: revealer,
+            output_view: output_view,
         }
     }
 
     fn add_task(&self, text: String) {
-        self.vertical_box.pack_end(
-            &self.command_output_view,
-            true,
-            true,
-            5,
-        );
-        self.command_output_view.show();
-        self.entry.hide();
-
-        self.command_output.set_text(&format!("task add {}", text));
+        self.revealer.set_reveal_child(true);
+        self.output_view.get_buffer().unwrap().set_text(&format!(
+            "task add {}",
+            text
+        ));
         gtk::timeout_add_seconds(2, || {
             gtk::main_quit();
             Continue(false)
@@ -64,7 +48,9 @@ fn main() {
         return;
     }
 
-    let app = Rc::new(App::new("New Task"));
+    let app = Rc::new(App::build(include_str!("window.glade")));
+
+    app.window.show_all();
 
     app.window.connect_delete_event(|_, _| {
         gtk::main_quit();
