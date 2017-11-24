@@ -1,0 +1,23 @@
+* {
+  background: #282828;
+  color: #fbf1c7;
+  font-size: 16pt;
+}
+
+.new-task #container {
+  margin: 10px;
+}
+
+.new-task #entry {
+  border: 0;
+}
+
+.new-task #title {
+  font-size: 8pt;
+  font-variant: small-caps;
+}
+
+.new-task #output_view {
+  font-size: 12pt;
+  padding-top: 0.5em;
+}

@@ -2,7 +2,9 @@
 <!-- Generated with glade 3.20.0 -->
 <interface>
   <requires lib="gtk+" version="3.20"/>
+  <!-- interface-css-provider-path default.css -->
   <object class="GtkApplicationWindow" id="window">
+    <property name="name">window</property>
     <property name="can_focus">False</property>
     <property name="title" translatable="yes">New Task</property>
     <property name="window_position">center</property>
@@ -11,19 +13,43 @@
     <property name="show_menubar">False</property>
     <child>
       <object class="GtkBox">
+        <property name="name">container</property>
         <property name="visible">True</property>
         <property name="can_focus">False</property>
         <property name="orientation">vertical</property>
         <property name="baseline_position">top</property>
         <child>
-          <object class="GtkEntry" id="entry">
+          <object class="GtkLabel" id="title">
+            <property name="name">title</property>
             <property name="visible">True</property>
-            <property name="can_focus">True</property>
+            <property name="can_focus">False</property>
+            <property name="label" translatable="yes">New task</property>
+            <property name="ellipsize">end</property>
+            <property name="single_line_mode">True</property>
+            <property name="xalign">0</property>
+            <property name="yalign">0</property>
+            <attributes>
+              <attribute name="variant" value="small-caps"/>
+            </attributes>
           </object>
           <packing>
             <property name="expand">False</property>
             <property name="fill">True</property>
             <property name="position">0</property>
+          </packing>
+        </child>
+        <child>
+          <object class="GtkEntry" id="entry">
+            <property name="name">entry</property>
+            <property name="visible">True</property>
+            <property name="can_focus">True</property>
+            <property name="has_frame">False</property>
+            <property name="truncate_multiline">True</property>
+          </object>
+          <packing>
+            <property name="expand">False</property>
+            <property name="fill">True</property>
+            <property name="position">1</property>
           </packing>
         </child>
         <child>
@@ -37,15 +63,13 @@
                 <property name="can_focus">True</property>
                 <child>
                   <object class="GtkTextView" id="output_view">
+                    <property name="name">output</property>
                     <property name="visible">True</property>
                     <property name="can_focus">True</property>
                     <property name="editable">False</property>
                     <property name="wrap_mode">word</property>
                     <property name="cursor_visible">False</property>
                     <property name="monospace">True</property>
-                    <style>
-                      <class name="output"/>
-                    </style>
                   </object>
                 </child>
               </object>
@@ -59,5 +83,8 @@
         </child>
       </object>
     </child>
+    <style>
+      <class name="new-task"/>
+    </style>
   </object>
 </interface>

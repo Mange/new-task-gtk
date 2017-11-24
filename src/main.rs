@@ -127,9 +127,23 @@ fn apply_custom_stylesheets(app: &App) -> bool {
     }
 
     let screen = app.window.get_screen().unwrap();
-    StyleContext::add_provider_for_screen(&screen, &css_provider, 100);
+    StyleContext::add_provider_for_screen(&screen, &css_provider, 2000);
 
     true
+}
+
+fn apply_default_stylesheets(app: &App) {
+    let css_provider = CssProvider::new();
+
+    css_provider.connect_parsing_error(|_, _section, error| {
+        eprintln!("Could not load stylesheet: {}", error);
+    });
+
+    CssProviderExt::load_from_data(&css_provider, include_bytes!("default.css"))
+        .expect("Default styles are invalid!");
+
+    let screen = app.window.get_screen().unwrap();
+    StyleContext::add_provider_for_screen(&screen, &css_provider, 1000);
 }
 
 fn main() {
@@ -140,6 +154,7 @@ fn main() {
 
     let app = Rc::new(App::build(include_str!("window.glade")));
 
+    apply_default_stylesheets(&app);
     if !apply_custom_stylesheets(&app) {
         std::process::exit(1);
     }
