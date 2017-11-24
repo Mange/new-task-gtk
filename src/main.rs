@@ -96,11 +96,29 @@ impl App {
         self.output_view.get_buffer().unwrap().set_text(&error);
     }
 
-    fn handle_key(&self, key: &gdk::EventKey) {
+    fn delete_word(&self) {
+        if !self.entry.get_editable() {
+            return;
+        }
+
+        let cursor_position = self.entry.get_property_cursor_position() as usize;
+        let text = self.entry.get_text().unwrap_or_else(|| String::from(""));
+        assert!(text.len() >= cursor_position);
+
+        let (from, length) = delete_word_backwards(&text, cursor_position);
+        self.entry.delete_text(from as i32, length as i32);
+    }
+
+    fn handle_key(&self, event: &gdk::EventKey) {
         use gdk::enums::key;
 
-        if key.get_keyval() == key::Escape {
+        let keyval = event.get_keyval();
+        let modifiers = event.get_state();
+
+        if keyval == key::Escape {
             App::quit();
+        } else if keyval == key::w && modifiers.contains(gdk::CONTROL_MASK) {
+            self.delete_word();
         }
     }
 
@@ -197,4 +215,87 @@ fn main() {
     }
 
     gtk::main();
+}
+
+fn delete_word_backwards(text: &str, cursor_position: usize) -> (usize, usize) {
+    let text_before_cursor = &text[0..cursor_position as usize];
+
+    if let Some(position) = text_before_cursor.rfind(char::is_whitespace) {
+        // Try to delete all consecutive whitespace by searching for the next non-whitespace
+        // character and delete back to there.
+        // Note that position must be advanced once again or else that first non-whitespace
+        // character will be included in the deletion range.
+        // As we are searching from the right and we got a position, the new position must be at
+        // least 1 lower than the previous position, so it should be safe to +1 it again.
+        // At worst we'll end up on the same numbers as before this branch.
+        if let Some(position) = (&text[0..position]).rfind(|c: char| !c.is_whitespace()) {
+            (position + 1, cursor_position - position - 1)
+        } else {
+            (position, cursor_position - position)
+        }
+    } else {
+        // Delete to beginning of entry
+        (0, cursor_position)
+    }
+}
+
+#[cfg(test)]
+mod test {
+    use super::*;
+
+    mod delete_word {
+        use super::*;
+
+        fn simulate(input: &str, position: usize) -> String {
+            let (from, length) = delete_word_backwards(input, position);
+            if length == 0 {
+                input.to_owned()
+            } else {
+                let string = String::from(&input[0..from]);
+                string + &input[(from + length)..input.len()]
+            }
+        }
+
+        #[test]
+        fn it_deletes_nothing_on_empty_input() {
+            let input = "";
+            assert_eq!(delete_word_backwards(input, 0), (0, 0));
+        }
+
+        #[test]
+        fn it_deletes_all_on_no_whitespace() {
+            let input = "123";
+            assert_eq!(delete_word_backwards(input, 3), (0, 3));
+            assert_eq!(&simulate(input, 3), "");
+        }
+
+        #[test]
+        fn it_deletes_to_cursor_if_middle_of_word() {
+            let input = "12345";
+            assert_eq!(delete_word_backwards(input, 3), (0, 3));
+            assert_eq!(&simulate(input, 3), "45");
+        }
+
+        #[test]
+        fn it_deletes_last_word_and_space() {
+            let input = "AAA BBB";
+            assert_eq!(delete_word_backwards(input, 7), (3, 4));
+            assert_eq!(&simulate(input, 7), "AAA");
+        }
+
+        #[test]
+        fn it_deletes_previous_word_and_space() {
+            let input = "AAA BBB CCC";
+            assert_eq!(delete_word_backwards(input, 7), (3, 4));
+            assert_eq!(&simulate(input, 7), "AAA CCC");
+        }
+
+        #[test]
+        fn it_deletes_consecutive_whitespace() {
+            let input = "AAA   BBB";
+            // Three spaces
+            assert_eq!(delete_word_backwards(input, 3 + 3 + 3), (3, 6));
+            assert_eq!(&simulate(input, 3 + 3 + 3), "AAA");
+        }
+    }
 }
