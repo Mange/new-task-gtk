@@ -3,6 +3,9 @@ authors = ["Magnus Bergmark <magnus.bergmark@gmail.com>"]
 name = "new-task-gtk"
 version = "0.1.0"
 
+[dependencies]
+xdg = "2.1.0"
+
 [dependencies.gtk]
-version = "0.2.0"
 features = ["v3_22"]
+version = "0.2.0"

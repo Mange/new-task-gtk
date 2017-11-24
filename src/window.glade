@@ -43,6 +43,9 @@
                     <property name="wrap_mode">word</property>
                     <property name="cursor_visible">False</property>
                     <property name="monospace">True</property>
+                    <style>
+                      <class name="output"/>
+                    </style>
                   </object>
                 </child>
               </object>
