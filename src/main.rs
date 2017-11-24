@@ -38,11 +38,15 @@ impl App {
         self.revealer.set_reveal_child(true);
         self.entry.set_editable(false);
 
-        let stream = TaskWarrior::add(&text);
+        if text.len() > 0 {
+            let stream = TaskWarrior::add(&text);
 
-        match stream {
-            Ok(stream) => self.run_task_command(stream),
-            Err(error) => self.show_task_error(error),
+            match stream {
+                Ok(stream) => self.run_task_command(stream),
+                Err(error) => self.show_task_error(error),
+            }
+        } else {
+            App::quit();
         }
     }
 
@@ -63,7 +67,10 @@ impl App {
                         insert_into_buffer(&output_buffer, &line);
                     }
                     Wait => return Continue(true),
-                    Complete => return Continue(false),
+                    Complete => {
+                        App::quit_after_seconds(1);
+                        return Continue(false);
+                    }
                     Failed(code) => {
                         let message = format!("Program exited with {} exist exit code", code);
                         insert_into_buffer(&output_buffer, &message);
@@ -78,14 +85,21 @@ impl App {
             }
         });
 
-        gtk::timeout_add_seconds(2, || {
-            gtk::main_quit();
-            Continue(false)
-        });
     }
 
     fn show_task_error(&self, error: String) {
         self.output_view.get_buffer().unwrap().set_text(&error);
+    }
+
+    fn quit() {
+        gtk::main_quit();
+    }
+
+    fn quit_after_seconds(seconds: u32) {
+        gtk::timeout_add_seconds(seconds, || {
+            App::quit();
+            Continue(false)
+        });
     }
 }
 
