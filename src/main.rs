@@ -5,7 +5,7 @@ mod command;
 
 use std::rc::Rc;
 use gtk::prelude::*;
-use gtk::{Entry, Window, TextView, Builder, Revealer, CssProvider, StyleContext};
+use gtk::{Entry, Window, TextView, Builder, Revealer, CssProvider, StyleContext, TextBuffer};
 use xdg::BaseDirectories;
 use command::{TaskWarrior, CommandStream};
 
@@ -49,17 +49,31 @@ impl App {
     fn run_task_command(&self, mut stream: CommandStream) {
         let output_buffer = self.output_view.get_buffer().unwrap().clone();
 
+        fn insert_into_buffer(buffer: &TextBuffer, text: &str) {
+            let (_, mut end) = buffer.get_bounds();
+            buffer.insert(&mut end, text);
+        }
+
         gtk::timeout_add(100, move || {
             use command::StreamStatus::*;
 
             loop {
                 match stream.try_next_line() {
                     Line(line) => {
-                        let (_, mut end) = output_buffer.get_bounds();
-                        output_buffer.insert(&mut end, &line);
+                        insert_into_buffer(&output_buffer, &line);
                     }
                     Wait => return Continue(true),
-                    Failed(_) | Error(_) | Complete => return Continue(false),
+                    Complete => return Continue(false),
+                    Failed(code) => {
+                        let message = format!("Program exited with {} exist exit code", code);
+                        insert_into_buffer(&output_buffer, &message);
+                        return Continue(false);
+                    }
+                    Error(message) => {
+                        let message = format!("ERROR: {}", message);
+                        insert_into_buffer(&output_buffer, &message);
+                        return Continue(false);
+                    }
                 }
             }
         });
