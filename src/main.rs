@@ -1,11 +1,13 @@
 extern crate gtk;
 extern crate xdg;
 
+mod command;
+
 use std::rc::Rc;
 use gtk::prelude::*;
-use gtk::{Entry, Window, WindowType, TextBuffer, TextView, Orientation, Builder, Revealer,
-          CssProvider, StyleContext};
+use gtk::{Entry, Window, TextView, Builder, Revealer, CssProvider, StyleContext};
 use xdg::BaseDirectories;
+use command::{TaskWarrior, CommandStream};
 
 struct App {
     window: Window,
@@ -34,14 +36,42 @@ impl App {
 
     fn add_task(&self, text: String) {
         self.revealer.set_reveal_child(true);
-        self.output_view.get_buffer().unwrap().set_text(&format!(
-            "task add {}",
-            text
-        ));
+        self.entry.set_editable(false);
+
+        let stream = TaskWarrior::add(&text);
+
+        match stream {
+            Ok(stream) => self.run_task_command(stream),
+            Err(error) => self.show_task_error(error),
+        }
+    }
+
+    fn run_task_command(&self, mut stream: CommandStream) {
+        let output_buffer = self.output_view.get_buffer().unwrap().clone();
+
+        gtk::timeout_add(100, move || {
+            use command::StreamStatus::*;
+
+            loop {
+                match stream.try_next_line() {
+                    Line(line) => {
+                        let (_, mut end) = output_buffer.get_bounds();
+                        output_buffer.insert(&mut end, &line);
+                    }
+                    Wait => return Continue(true),
+                    Failed(_) | Error(_) | Complete => return Continue(false),
+                }
+            }
+        });
+
         gtk::timeout_add_seconds(2, || {
             gtk::main_quit();
             Continue(false)
         });
+    }
+
+    fn show_task_error(&self, error: String) {
+        self.output_view.get_buffer().unwrap().set_text(&error);
     }
 }
 
